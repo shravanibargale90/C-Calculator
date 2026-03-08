@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>C Calculator</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet"/>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0a0e1a;
+    --panel: #0f1628;
+    --border: #1e3a5f;
+    --glow: #00d4ff;
+    --glow2: #00ff9f;
+    --amber: #ffb800;
+    --red: #ff4444;
+    --text: #c8e6ff;
+    --dim: #4a6a8a;
+  }
+
+  body {
+    background: var(--bg);
+    font-family: 'Share Tech Mono', monospace;
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background-image:
+      radial-gradient(ellipse at 20% 20%, rgba(0,100,180,0.08) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 80%, rgba(0,212,255,0.05) 0%, transparent 60%);
+  }
+
+  .wrapper {
+    width: 100%;
+    max-width: 560px;
+  }
+
+  .title-bar {
+    text-align: center;
+    margin-bottom: 24px;
+  }
+
+  .title-bar h1 {
+    font-family: 'Orbitron', monospace;
+    font-weight: 900;
+    font-size: 1.6rem;
+    color: var(--glow);
+    text-shadow: 0 0 20px rgba(0,212,255,0.6), 0 0 40px rgba(0,212,255,0.3);
+    letter-spacing: 4px;
+  }
+
+  .title-bar p {
+    font-size: 0.72rem;
+    color: var(--dim);
+    margin-top: 4px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  .calc-box {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    box-shadow: 0 0 40px rgba(0,100,180,0.15), inset 0 1px 0 rgba(0,212,255,0.1);
+    overflow: hidden;
+  }
+
+  /* TOP BAR */
+  .top-bar {
+    background: #070c18;
+    border-bottom: 1px solid var(--border);
+    padding: 8px 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .dot { width: 10px; height: 10px; border-radius: 50%; }
+  .dot.r { background: #ff5f56; }
+  .dot.y { background: #ffbd2e; }
+  .dot.g { background: #27c93f; }
+  .top-bar span { font-size: 0.7rem; color: var(--dim); margin-left: auto; letter-spacing: 1px; }
+
+  /* DISPLAY */
+  .display {
+    background: #070c18;
+    border-bottom: 1px solid var(--border);
+    padding: 20px 24px 16px;
+  }
+
+  .display-history {
+    font-size: 0.72rem;
+    color: var(--dim);
+    min-height: 18px;
+    margin-bottom: 6px;
+    text-align: right;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  .display-main {
+    text-align: right;
+    font-family: 'Orbitron', monospace;
+    font-size: 2.4rem;
+    font-weight: 700;
+    color: var(--glow2);
+    text-shadow: 0 0 16px rgba(0,255,159,0.4);
+    min-height: 56px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    overflow: hidden;
+  }
+
+  .display-main.error { color: var(--red); text-shadow: 0 0 16px rgba(255,68,68,0.4); font-size: 1.2rem; }
+
+  .display-op {
+    font-size: 0.75rem;
+    color: var(--amber);
+    text-align: right;
+    min-height: 18px;
+    margin-top: 4px;
+  }
+
+  /* STATUS BAR */
+  .status-bar {
+    display: flex;
+    gap: 8px;
+    padding: 8px 24px;
+    background: #060b16;
+    border-bottom: 1px solid var(--border);
+  }
+  .status-pill {
+    font-size: 0.62rem;
+    padding: 2px 8px;
+    border-radius: 2px;
+    letter-spacing: 1px;
+    background: rgba(0,212,255,0.08);
+    border: 1px solid rgba(0,212,255,0.2);
+    color: var(--dim);
+    transition: all 0.2s;
+  }
+  .status-pill.active {
+    background: rgba(0,212,255,0.18);
+    border-color: var(--glow);
+    color: var(--glow);
+    box-shadow: 0 0 8px rgba(0,212,255,0.3);
+  }
+
+  /* BUTTONS */
+  .btn-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border-top: 1px solid var(--border);
+  }
+
+  .btn {
+    background: #0d1525;
+    border: none;
+    color: var(--text);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 1.1rem;
+    padding: 18px 0;
+    cursor: pointer;
+    transition: all 0.12s ease;
+    position: relative;
+    overflow: hidden;
+    letter-spacing: 1px;
+  }
+
+  .btn::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: transparent;
+    transition: background 0.12s;
+  }
+
+  .btn:hover { background: #121e35; color: #fff; }
+  .btn:active { transform: scale(0.96); }
+
+  .btn.num { color: #d0e8ff; }
+  .btn.op {
+    background: #0c1a2e;
+    color: var(--glow);
+    font-size: 1.3rem;
+    font-weight: bold;
+  }
+  .btn.op:hover { background: #102336; color: #fff; box-shadow: inset 0 0 10px rgba(0,212,255,0.1); }
+
+  .btn.eq {
+    background: linear-gradient(135deg, #004466, #006688);
+    color: var(--glow2);
+    font-size: 1.4rem;
+    font-family: 'Orbitron', monospace;
+    box-shadow: inset 0 0 20px rgba(0,255,159,0.1);
+  }
+  .btn.eq:hover { background: linear-gradient(135deg, #005577, #007799); }
+  .btn.eq:active { transform: scale(0.95); }
+
+  .btn.clear {
+    background: #1a0d0d;
+    color: var(--red);
+    font-family: 'Orbitron', monospace;
+    font-size: 0.85rem;
+  }
+  .btn.clear:hover { background: #240f0f; }
+
+  .btn.zero { grid-column: span 2; }
+
+  .btn.fn {
+    background: #0a1520;
+    color: var(--amber);
+    font-size: 0.82rem;
+    letter-spacing: 0.5px;
+  }
+  .btn.fn:hover { background: #0f1d2c; }
+
+  /* CODE PANEL */
+  .code-panel {
+    border-top: 1px solid var(--border);
+    background: #060b16;
+  }
+
+  .code-toggle {
+    width: 100%;
+    background: none;
+    border: none;
+    color: var(--dim);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.7rem;
+    padding: 10px 20px;
+    text-align: left;
+    cursor: pointer;
+    letter-spacing: 1px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: color 0.2s;
+  }
+  .code-toggle:hover { color: var(--glow); }
+  .code-toggle .arrow { transition: transform 0.3s; }
+  .code-toggle.open .arrow { transform: rotate(90deg); }
+
+  .code-body {
+    display: none;
+    padding: 0 20px 20px;
+    max-height: 300px;
+    overflow-y: auto;
+  }
+  .code-body.visible { display: block; }
+
+  pre {
+    font-size: 0.72rem;
+    line-height: 1.8;
+    color: #5a8aaa;
+    counter-reset: line;
+  }
+
+  pre .ln { color: #1e3a5f; margin-right: 16px; user-select: none; display: inline-block; width: 24px; text-align: right; }
+  pre .kw { color: #569cd6; }
+  pre .fn-name { color: #dcdcaa; }
+  pre .str { color: #ce9178; }
+  pre .cmt { color: #3a5a3a; font-style: italic; }
+  pre .num-lit { color: #b5cea8; }
+  pre .op-lit { color: var(--glow2); }
+
+  /* LOG */
+  .log {
+    padding: 12px 20px;
+    border-top: 1px solid var(--border);
+    max-height: 100px;
+    overflow-y: auto;
+    background: #060b16;
+  }
+  .log-title { font-size: 0.62rem; color: var(--dim); letter-spacing: 1px; margin-bottom: 6px; }
+  .log-entry { font-size: 0.7rem; color: var(--dim); padding: 2px 0; border-bottom: 1px solid #0d1828; }
+  .log-entry .res { color: var(--glow2); }
+  .log-entry .err { color: var(--red); }
+
+  /* FLASH ANIMATION */
+  @keyframes flash { 0%,100% { opacity:1 } 50% { opacity:0.4 } }
+  .flash { animation: flash 0.15s ease; }
+
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<div class="wrapper">
+  <div class="title-bar">
+    <h1>CALC.C</h1>
+    <p>Console Calculator · Switch-Case · C Programming</p>
+  </div>
+
+  <div class="calc-box">
+    <div class="top-bar">
+      <div class="dot r"></div>
+      <div class="dot y"></div>
+      <div class="dot g"></div>
+      <span>calculator.c · gcc -o calc calculator.c</span>
+    </div>
+
+    <div class="display">
+      <div class="display-history" id="history">&nbsp;</div>
+      <div class="display-main" id="display">0</div>
+      <div class="display-op" id="op-label">&nbsp;</div>
+    </div>
+
+    <div class="status-bar">
+      <div class="status-pill" id="pill-add">ADD</div>
+      <div class="status-pill" id="pill-sub">SUB</div>
+      <div class="status-pill" id="pill-mul">MUL</div>
+      <div class="status-pill" id="pill-div">DIV</div>
+      <div class="status-pill" id="pill-mod">MOD</div>
+    </div>
+
+    <div class="btn-grid">
+      <!-- Row 1 -->
+      <button class="btn clear" onclick="clearAll()">AC</button>
+      <button class="btn fn" onclick="toggleSign()">+/−</button>
+      <button class="btn fn" onclick="inputPercent()">%</button>
+      <button class="btn op" onclick="setOp('/')" id="btn-div">÷</button>
+
+      <!-- Row 2 -->
+      <button class="btn num" onclick="inputNum('7')">7</button>
+      <button class="btn num" onclick="inputNum('8')">8</button>
+      <button class="btn num" onclick="inputNum('9')">9</button>
+      <button class="btn op" onclick="setOp('*')" id="btn-mul">×</button>
+
+      <!-- Row 3 -->
+      <button class="btn num" onclick="inputNum('4')">4</button>
+      <button class="btn num" onclick="inputNum('5')">5</button>
+      <button class="btn num" onclick="inputNum('6')">6</button>
+      <button class="btn op" onclick="setOp('-')" id="btn-sub">−</button>
+
+      <!-- Row 4 -->
+      <button class="btn num" onclick="inputNum('1')">1</button>
+      <button class="btn num" onclick="inputNum('2')">2</button>
+      <button class="btn num" onclick="inputNum('3')">3</button>
+      <button class="btn op" onclick="setOp('+')" id="btn-add">+</button>
+
+      <!-- Row 5 -->
+      <button class="btn num zero" onclick="inputNum('0')">0</button>
+      <button class="btn num" onclick="inputDot()">.</button>
+      <button class="btn eq" onclick="calculate()">=</button>
+    </div>
+
+    <div class="log">
+      <div class="log-title">▸ HISTORY LOG</div>
+      <div id="log-entries"></div>
+    </div>
+
+    <div class="code-panel">
+      <button class="code-toggle" id="code-toggle-btn" onclick="toggleCode()">
+        <span class="arrow">▶</span> VIEW SWITCH-CASE SOURCE (C)
+      </button>
+      <div class="code-body" id="code-body">
+<pre>
+<span class="ln">1</span>  <span class="cmt">/* Console Calculator in C */</span>
+<span class="ln">2</span>  <span class="cmt">/* Basic Arithmetic — Switch-Case */</span>
+<span class="ln">3</span>  <span class="kw">#include</span> <span class="str">&lt;stdio.h&gt;</span>
+<span class="ln">4</span>
+<span class="ln">5</span>  <span class="kw">int</span> <span class="fn-name">main</span>() {
+<span class="ln">6</span>    <span class="kw">int</span> choice;
+<span class="ln">7</span>    <span class="kw">double</span> num1, num2, result;
+<span class="ln">8</span>
+<span class="ln">9</span>    printf(<span class="str">"Enter choice (1-5): "</span>);
+<span class="ln">10</span>   scanf(<span class="str">"%d"</span>, <span class="op-lit">&amp;</span>choice);
+<span class="ln">11</span>   printf(<span class="str">"Enter num1 and num2: "</span>);
+<span class="ln">12</span>   scanf(<span class="str">"%lf %lf"</span>, <span class="op-lit">&amp;</span>num1, <span class="op-lit">&amp;</span>num2);
+<span class="ln">13</span>
+<span class="ln">14</span>   <span class="kw">switch</span> (choice) {
+<span class="ln">15</span>
+<span class="ln">16</span>     <span class="kw">case</span> <span class="num-lit">1</span>:  <span class="cmt">/* Addition */</span>
+<span class="ln">17</span>       result <span class="op-lit">=</span> num1 <span class="op-lit">+</span> num2;
+<span class="ln">18</span>       printf(<span class="str">"%.2lf + %.2lf = %.2lf\n"</span>, num1, num2, result);
+<span class="ln">19</span>       <span class="kw">break</span>;
+<span class="ln">20</span>
+<span class="ln">21</span>     <span class="kw">case</span> <span class="num-lit">2</span>:  <span class="cmt">/* Subtraction */</span>
+<span class="ln">22</span>       result <span class="op-lit">=</span> num1 <span class="op-lit">-</span> num2;
+<span class="ln">23</span>       printf(<span class="str">"%.2lf - %.2lf = %.2lf\n"</span>, num1, num2, result);
+<span class="ln">24</span>       <span class="kw">break</span>;
+<span class="ln">25</span>
+<span class="ln">26</span>     <span class="kw">case</span> <span class="num-lit">3</span>:  <span class="cmt">/* Multiplication */</span>
+<span class="ln">27</span>       result <span class="op-lit">=</span> num1 <span class="op-lit">*</span> num2;
+<span class="ln">28</span>       printf(<span class="str">"%.2lf * %.2lf = %.2lf\n"</span>, num1, num2, result);
+<span class="ln">29</span>       <span class="kw">break</span>;
+<span class="ln">30</span>
+<span class="ln">31</span>     <span class="kw">case</span> <span class="num-lit">4</span>:  <span class="cmt">/* Division */</span>
+<span class="ln">32</span>       <span class="kw">if</span> (num2 <span class="op-lit">==</span> <span class="num-lit">0</span>) {
+<span class="ln">33</span>         printf(<span class="str">"Error: Division by zero!\n"</span>);
+<span class="ln">34</span>       } <span class="kw">else</span> {
+<span class="ln">35</span>         result <span class="op-lit">=</span> num1 <span class="op-lit">/</span> num2;
+<span class="ln">36</span>         printf(<span class="str">"%.2lf / %.2lf = %.2lf\n"</span>, num1, num2, result);
+<span class="ln">37</span>       }
+<span class="ln">38</span>       <span class="kw">break</span>;
+<span class="ln">39</span>
+<span class="ln">40</span>     <span class="kw">case</span> <span class="num-lit">5</span>:  <span class="cmt">/* Modulus */</span>
+<span class="ln">41</span>       <span class="kw">if</span> ((<span class="kw">int</span>)num2 <span class="op-lit">==</span> <span class="num-lit">0</span>) {
+<span class="ln">42</span>         printf(<span class="str">"Error: Modulus by zero!\n"</span>);
+<span class="ln">43</span>       } <span class="kw">else</span> {
+<span class="ln">44</span>         printf(<span class="str">"%d %% %d = %d\n"</span>,
+<span class="ln">45</span>           (<span class="kw">int</span>)num1, (<span class="kw">int</span>)num2,
+<span class="ln">46</span>           (<span class="kw">int</span>)num1 <span class="op-lit">%</span> (<span class="kw">int</span>)num2);
+<span class="ln">47</span>       }
+<span class="ln">48</span>       <span class="kw">break</span>;
+<span class="ln">49</span>
+<span class="ln">50</span>     <span class="kw">default</span>:
+<span class="ln">51</span>       printf(<span class="str">"Invalid choice!\n"</span>);
+<span class="ln">52</span>       <span class="kw">break</span>;
+<span class="ln">53</span>   }
+<span class="ln">54</span>   <span class="kw">return</span> <span class="num-lit">0</span>;
+<span class="ln">55</span> }
+</pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let current = '0';
+let operand = null;
+let operator = null;
+let justCalc = false;
+let isError = false;
+
+const opNames = { '+': 'ADD', '-': 'SUB', '*': 'MUL', '/': 'DIV', '%': 'MOD' };
+const opSymbols = { '+': '+', '-': '−', '*': '×', '/': '÷', '%': '%' };
+const pillMap = { '+': 'pill-add', '-': 'pill-sub', '*': 'pill-mul', '/': 'pill-div', '%': 'pill-mod' };
+
+function updateDisplay() {
+  const d = document.getElementById('display');
+  d.textContent = current;
+  d.className = 'display-main' + (isError ? ' error' : '');
+
+  // font-size shrink for long numbers
+  if (current.length > 10) d.style.fontSize = '1.3rem';
+  else if (current.length > 7) d.style.fontSize = '1.8rem';
+  else d.style.fontSize = '2.4rem';
+}
+
+function setHistory(txt) { document.getElementById('history').textContent = txt || '\u00a0'; }
+function setOpLabel(txt) { document.getElementById('op-label').textContent = txt || '\u00a0'; }
+
+function clearPills() {
+  Object.values(pillMap).forEach(id => document.getElementById(id).classList.remove('active'));
+}
+
+function inputNum(n) {
+  if (isError) { clearAll(); }
+  if (justCalc) { current = n; justCalc = false; }
+  else current = current === '0' ? n : current + n;
+  isError = false;
+  updateDisplay();
+}
+
+function inputDot() {
+  if (isError) return;
+  if (justCalc) { current = '0.'; justCalc = false; }
+  else if (!current.includes('.')) current += '.';
+  updateDisplay();
+}
+
+function setOp(op) {
+  if (isError) return;
+  if (operand !== null && !justCalc) calculate(true);
+  operand = parseFloat(current);
+  operator = op;
+  justCalc = true;
+  clearPills();
+  document.getElementById(pillMap[op]).classList.add('active');
+  setHistory(formatNum(operand) + ' ' + opSymbols[op]);
+  setOpLabel('case ' + getCaseNum(op) + ':  // ' + opNames[op]);
+}
+
+function getCaseNum(op) { return {'+':1,'-':2,'*':3,'/':4,'%':5}[op] || '?'; }
+
+function toggleSign() {
+  if (isError) return;
+  current = String(parseFloat(current) * -1);
+  updateDisplay();
+}
+
+function inputPercent() {
+  if (isError) return;
+  current = String(parseFloat(current) / 100);
+  updateDisplay();
+}
+
+function calculate(internal = false) {
+  if (operator === null || operand === null) return;
+  const b = parseFloat(current);
+  const a = operand;
+  let result;
+  let errMsg = null;
+
+  switch (operator) {
+    case '+': result = a + b; break;
+    case '-': result = a - b; break;
+    case '*': result = a * b; break;
+    case '/':
+      if (b === 0) { errMsg = 'DIV BY ZERO ERROR'; break; }
+      result = a / b;
+      break;
+    case '%':
+      if (Math.trunc(b) === 0) { errMsg = 'MOD BY ZERO ERROR'; break; }
+      result = Math.trunc(a) % Math.trunc(b);
+      break;
+  }
+
+  const histLine = formatNum(a) + ' ' + opSymbols[operator] + ' ' + formatNum(b);
+
+  if (errMsg) {
+    addLog(histLine, null, errMsg);
+    current = errMsg;
+    isError = true;
+    setHistory(histLine + ' =');
+    setOpLabel('');
+    clearPills();
+  } else {
+    const formatted = formatNum(result);
+    if (!internal) addLog(histLine, formatted);
+    setHistory(histLine + ' =');
+    current = String(result);
+    isError = false;
+    clearPills();
+    setOpLabel('');
+  }
+
+  operand = null;
+  operator = null;
+  justCalc = true;
+  updateDisplay();
+
+  // flash
+  const d = document.getElementById('display');
+  d.classList.remove('flash');
+  void d.offsetWidth;
+  d.classList.add('flash');
+}
+
+function clearAll() {
+  current = '0'; operand = null; operator = null;
+  justCalc = false; isError = false;
+  clearPills();
+  setHistory(''); setOpLabel('');
+  updateDisplay();
+}
+
+function formatNum(n) {
+  if (Number.isInteger(n)) return String(n);
+  return parseFloat(n.toFixed(8)).toString();
+}
+
+function addLog(expr, result, err) {
+  const el = document.getElementById('log-entries');
+  const d = document.createElement('div');
+  d.className = 'log-entry';
+  if (err) d.innerHTML = expr + ' = <span class="err">' + err + '</span>';
+  else d.innerHTML = expr + ' = <span class="res">' + result + '</span>';
+  el.prepend(d);
+  while (el.children.length > 8) el.removeChild(el.lastChild);
+}
+
+function toggleCode() {
+  const body = document.getElementById('code-body');
+  const btn = document.getElementById('code-toggle-btn');
+  body.classList.toggle('visible');
+  btn.classList.toggle('open');
+}
+
+// Keyboard support
+document.addEventListener('keydown', e => {
+  if (e.key >= '0' && e.key <= '9') inputNum(e.key);
+  else if (e.key === '.') inputDot();
+  else if (e.key === '+') setOp('+');
+  else if (e.key === '-') setOp('-');
+  else if (e.key === '*') setOp('*');
+  else if (e.key === '/') { e.preventDefault(); setOp('/'); }
+  else if (e.key === '%') setOp('%');
+  else if (e.key === 'Enter' || e.key === '=') calculate();
+  else if (e.key === 'Escape') clearAll();
+  else if (e.key === 'Backspace') {
+    if (!isError && !justCalc && current.length > 1) {
+      current = current.slice(0, -1);
+      if (current === '-') current = '0';
+      updateDisplay();
+    }
+  }
+});
+</script>
+</body>
+</html>
