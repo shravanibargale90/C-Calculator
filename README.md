@@ -101,8 +101,8 @@ switch (choice) {
 ## 👤 Author
 
 **Your Name**
-- GitHub: [@yourusername](https://github.com/yourusername)
-- Portfolio: [yoursite.com](https://yoursite.com)
+- GitHub: [@shravanibargale90](https://github.com/yourusername)
+- Portfolio: [https://shravanii-bargale.42web.io](https://shravanii-bargale.42web.io)
 
 ---
 
