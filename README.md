@@ -9,7 +9,7 @@ A console-based calculator built in C using **switch-case statements** for all b
 ---
 
 ## 🌐 Live Demo
-👉 **[View Live Demo](https://yourusername.github.io/c-calculator)**
+👉 **[View Live Demo](https://shravanibargale90.github.io/C-Calculator/c_calculator.html)**
 
 ---
 
